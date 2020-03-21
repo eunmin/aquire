@@ -1,9 +1,13 @@
 (ns aquire.core
-    (:require [reagent.core :as reagent :refer [atom]]))
+  (:require [re-frame.core :refer [dispatch-sync]]
+            [reagent.core :as reagent]
+            [aquire.events]
+            [aquire.subs]
+            [aquire.views]))
 
 (enable-console-print!)
 
-(defn stock-price [level tiles]
+#_(defn stock-price [level tiles]
   (if (< tiles 2)
     0
     (let [result (cond
@@ -15,7 +19,7 @@
                    :else 1000)]
       (+ (* level 100) result))))
 
-(defonce corporations
+#_(defonce corporations
   (atom {"SACKSON" {:level 0 :tiles 0}
          "ZETA"    {:level 0 :tiles 0}
          "HYDRA"   {:level 1 :tiles 0}
@@ -24,7 +28,7 @@
          "PHOENIX" {:level 2 :tiles 0}
          "QUANTUM" {:level 2 :tiles 0}}))
 
-(defn corp-view [corp-name {:keys [tiles level]}]
+#_(defn corp-view [corp-name {:keys [tiles level]}]
   (let [price (stock-price level tiles)
         majority (* price 10)
         minority (/ majority 2)]
@@ -45,12 +49,10 @@
      [:button {:on-click (fn [] (swap! corporations #(update-in % [corp-name :tiles] inc)))} "+"]
      [:button {:on-click (fn [] (swap! corporations #(update-in % [corp-name :tiles] dec)))} "-"]]))
 
-(defn main []
-  [:div
-   (for [[corp-name state] @corporations]
-     ^{:key corp-name} [corp-view corp-name state])])
+(defn ^:export init
+  []
+  (dispatch-sync [:initialise-db])
+  (reagent/render [aquire.views/aquire-app]
+    (.getElementById js/document "app")))
 
-(reagent/render-component [main]
-                          (. js/document (getElementById "app")))
-
-(defn on-js-reload [])
+(init)
